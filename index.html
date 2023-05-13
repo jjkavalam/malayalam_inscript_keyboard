@@ -11,6 +11,7 @@
         body {
             font-family: sans-serif;
         }
+
         .row_cell {
             cursor: pointer;
             display: inline-block;
@@ -95,12 +96,17 @@
     <ellipse id="kBackTick" cx="70.709" cy="254.73" rx="13.975" ry="15.34" style="fill:#000000;stroke-width:.79511"/>
 </svg>
 <div id="shift" style="margin: 12px; color: silver;"><b>⇧ Shift</b></div>
+<div id="tooltip"
+     style="display: none; background: silver; padding: 6px; border-radius: 12px; font-size: 16px; opacity: 0.9;"></div>
+<textarea cols="80" id="textarea" placeholder="Type some sentence"></textarea>
+<br/><input type="submit" value="Transliterate" onclick="transliterate()">
+<div id="ml" style="margin-top: 12px;"></div>
+<textarea cols="80" id="test" placeholder="Type malayalam here..."></textarea>
+<hr/>
 <div id="table"></div>
 <p>
     Click on an alphabet/symbol to find out how to type it in the InScript keyboard.
 </p>
-<div id="tooltip"
-     style="display: none; background: silver; padding: 6px; border-radius: 12px; font-size: 16px; opacity: 0.9;"></div>
 <script>
     let lastId;
     const tooltip = document.getElementById("tooltip");
@@ -223,6 +229,17 @@
         alphaSym,
     ];
 
+    const alphas = [
+        ...alphaSwaram,
+        ...alphaKa,
+        ...alphaCh,
+        ...alphaTa,
+        ...alphaTh,
+        ...alphaPa,
+        ...alphaYa,
+        ...alphaSym,
+    ];
+
     function alphabetRow(row) {
         const cells = row.map(([glyph, key, isShift]) => {
             return `<div class="row_cell" onclick="highlight('${key}', '${glyph}', ${isShift})">${glyph}</div>`
@@ -234,6 +251,63 @@
     rows.forEach(row => {
         tbl.innerHTML += alphabetRow(row);
     });
+
+    const ml$ = document.getElementById('ml');
+
+
+    async function transliterate() {
+        const ta = document.getElementById("textarea");
+        const url = `http://localhost:5000/transliterate?input=${encodeURIComponent(ta.value)}`;
+        const ret = await (await fetch(url)).json();
+        const ml = ret["ml"]
+        ml$.innerText = ml;
+        const chars = ml.split('');
+        const row = [];
+        for (const char of chars) {
+            for (const alpha of alphas) {
+                if (char === alpha[0]) {
+                    row.push(alpha);
+                }
+            }
+        }
+        ml$.innerHTML = ml + "<br>" + alphabetRow(row);
+    }
+    function sleep() {
+        return new Promise(resolve => {
+            setTimeout(resolve, 500);
+        })
+    }
+
+    const test = document.getElementById("test");
+    test.onkeyup = function (evt) {
+        const input = evt.target.value;
+        const inputChars = input.split('');
+
+        const ref = ml$.innerText;
+        const chars = ref.split('');
+
+        let i = 0;
+        let j = 0;
+        for (; i < inputChars.length && j < chars.length;) {
+            if (inputChars[i] === chars[j]) {
+                i++;
+                j++;
+            } else {
+                i++;
+            }
+        }
+        console.log(i, j, inputChars, chars);
+
+        const char = chars[j];
+        console.log("next is", char);
+        for (const alpha of alphas) {
+            if (char === alpha[0]) {
+                highlight(alpha[1], alpha[0], alpha[2]);
+                break;
+            }
+        }
+
+    };
 
 </script>
 </body>

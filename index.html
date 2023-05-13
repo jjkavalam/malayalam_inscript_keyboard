@@ -98,7 +98,7 @@
 <div id="shift" style="margin: 12px; color: silver;"><b>⇧ Shift</b></div>
 <div id="tooltip"
      style="display: none; background: silver; padding: 6px; border-radius: 12px; font-size: 16px; opacity: 0.9;"></div>
-<textarea cols="80" id="textarea" placeholder="Type some sentence"></textarea>
+<textarea cols="80" id="textarea" placeholder="Type some sentence">Amme ente amme</textarea>
 <br/><input type="submit" value="Transliterate" onclick="transliterate()">
 <div id="ml" style="margin-top: 12px;"></div>
 <textarea cols="80" id="test" placeholder="Type malayalam here..."></textarea>
@@ -200,9 +200,11 @@
         ["ഷ", "kComma", true],
         ["സ", "kM", false],
         ["ള", "kN", true],
+        ["റ", "kJ", true],
     ];
 
     const alphaSym = [
+        ["്", "kD", false],
         ["ാ", "kE", false],
         ["ി", "kF", false],
         ["ീ", "kR", false],
@@ -218,6 +220,10 @@
         ["ം", "kX", false],
     ];
 
+    const specials = [
+        [" ", "kLeftThumb", false],
+    ];
+
     const rows = [
         alphaSwaram,
         alphaKa,
@@ -227,6 +233,7 @@
         alphaPa,
         alphaYa,
         alphaSym,
+        specials,
     ];
 
     const alphas = [
@@ -238,6 +245,7 @@
         ...alphaPa,
         ...alphaYa,
         ...alphaSym,
+        ...specials,
     ];
 
     function alphabetRow(row) {
@@ -259,19 +267,26 @@
         const ta = document.getElementById("textarea");
         const url = `http://localhost:5000/transliterate?input=${encodeURIComponent(ta.value)}`;
         const ret = await (await fetch(url)).json();
+        console.log(ret);
         const ml = ret["ml"]
         ml$.innerText = ml;
         const chars = ml.split('');
         const row = [];
+        console.log(chars);
         for (const char of chars) {
+            console.log("searching for", char);
             for (const alpha of alphas) {
                 if (char === alpha[0]) {
+                    console.log("found");
                     row.push(alpha);
                 }
             }
         }
         ml$.innerHTML = ml + "<br>" + alphabetRow(row);
+        update();
+        test.focus();
     }
+
     function sleep() {
         return new Promise(resolve => {
             setTimeout(resolve, 500);
@@ -279,8 +294,8 @@
     }
 
     const test = document.getElementById("test");
-    test.onkeyup = function (evt) {
-        const input = evt.target.value;
+    function update() {
+        const input = test.value;
         const inputChars = input.split('');
 
         const ref = ml$.innerText;
@@ -307,7 +322,8 @@
             }
         }
 
-    };
+    }
+    test.onkeyup = update;
 
 </script>
 </body>
